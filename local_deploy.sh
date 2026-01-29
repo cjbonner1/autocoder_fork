@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # =============================================================================
-# AutoCoder Management Script
+# AutoCoder management script (local_deploy.sh)
 # =============================================================================
 # This script automates pulling the latest code, stopping existing processes,
 # and launching the application in either Development or Production mode.
 #
 # Usage:
-#   ./manage.sh [mode]
+#   ./local_deploy.sh [mode]
 #
 # Modes:
 #   dev   - Stop existing, pull latest, and start with hot-reload (Default)
@@ -33,6 +33,7 @@ stop_processes() {
     pkill -9 -f "uvicorn" 2>/dev/null
     pkill -9 -f "start_ui.py" 2>/dev/null
     pkill -9 -f "start_ui.sh" 2>/dev/null
+    pkill -9 -f "local_deploy.sh" 2>/dev/null
     echo -e "${GREEN}All processes stopped.${NC}"
 }
 
