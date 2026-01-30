@@ -5,7 +5,7 @@
  * Shows source indicators (project/app/default) for each setting.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Loader2,
   AlertCircle,
@@ -271,36 +271,115 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
   const isSaving = updateApp.isPending || updateProject.isPending
   const isLoading = appLoading || (projectName && projectLoading)
 
+  // Settings that auto-apply immediately (UI-only, don't affect agent)
+  const UI_ONLY_SETTINGS = new Set([
+    'showDebugPanel', 'celebrateOnComplete', 'theme', 'darkMode', 'debugPanelHeight', 'kanbanColumns'
+  ])
+
+  // Pending changes for agent-affecting settings (require explicit save)
+  const [pendingAppChanges, setPendingAppChanges] = useState<AppSettingsV2Update>({})
+  const [pendingProjectChanges, setPendingProjectChanges] = useState<ProjectSettingsV2Update>({})
+
+  // Reset pending changes when modal closes or settings reload
+  useEffect(() => {
+    if (!isOpen) {
+      setPendingAppChanges({})
+      setPendingProjectChanges({})
+    }
+  }, [isOpen])
+
+  // Check if there are unsaved changes
+  const hasUnsavedAppChanges = Object.keys(pendingAppChanges).length > 0
+  const hasUnsavedProjectChanges = Object.keys(pendingProjectChanges).length > 0
+  const hasUnsavedChanges = hasUnsavedAppChanges || hasUnsavedProjectChanges
+
   // Get source for a setting
   const getSource = (key: string): SettingSource => {
     return (effectiveSettings?.sources?.[key] as SettingSource) || 'default'
   }
 
-  // Get effective value for a setting
+  // Get effective value for a setting (including pending changes)
   const getEffective = <T,>(key: string, fallback: T): T => {
+    // Check pending changes first
+    if (key in pendingAppChanges) {
+      return pendingAppChanges[key as keyof AppSettingsV2Update] as T
+    }
+    if (key in pendingProjectChanges) {
+      return pendingProjectChanges[key as keyof ProjectSettingsV2Update] as T
+    }
     const value = effectiveSettings?.settings?.[key]
     return (value !== undefined ? value : fallback) as T
   }
 
-  // Handle app setting changes
+  // Handle app setting changes - auto-apply UI settings, buffer agent settings
   const handleAppChange = (update: AppSettingsV2Update) => {
-    if (!isSaving) {
-      updateApp.mutate(update)
+    if (isSaving) return
+
+    const uiChanges: AppSettingsV2Update = {}
+    const agentChanges: AppSettingsV2Update = {}
+
+    for (const [key, value] of Object.entries(update)) {
+      if (UI_ONLY_SETTINGS.has(key)) {
+        uiChanges[key as keyof AppSettingsV2Update] = value as never
+      } else {
+        agentChanges[key as keyof AppSettingsV2Update] = value as never
+      }
+    }
+
+    // Apply UI changes immediately
+    if (Object.keys(uiChanges).length > 0) {
+      updateApp.mutate(uiChanges)
+    }
+
+    // Buffer agent changes for explicit save
+    if (Object.keys(agentChanges).length > 0) {
+      setPendingAppChanges(prev => ({ ...prev, ...agentChanges }))
     }
   }
 
-  // Handle project setting changes
+  // Handle project setting changes - buffer for explicit save
   const handleProjectChange = (update: ProjectSettingsV2Update) => {
-    if (!isSaving && projectName) {
-      updateProject.mutate({ settings: update })
+    if (isSaving || !projectName) return
+    setPendingProjectChanges(prev => ({ ...prev, ...update }))
+  }
+
+  // Save all pending changes
+  const handleSave = async () => {
+    if (hasUnsavedAppChanges) {
+      await updateApp.mutateAsync(pendingAppChanges)
+      setPendingAppChanges({})
     }
+    if (hasUnsavedProjectChanges && projectName) {
+      await updateProject.mutateAsync({ settings: pendingProjectChanges })
+      setPendingProjectChanges({})
+    }
+  }
+
+  // Discard pending changes
+  const handleCancel = () => {
+    setPendingAppChanges({})
+    setPendingProjectChanges({})
   }
 
   // Reset project setting to app default
   const handleResetProjectSetting = (key: string) => {
     if (projectName) {
+      // Remove from pending if present
+      setPendingProjectChanges(prev => {
+        const next = { ...prev }
+        delete next[key as keyof ProjectSettingsV2Update]
+        return next
+      })
       clearProjectSetting.mutate(key)
     }
+  }
+
+  // Get app setting value (with pending changes applied)
+  const getAppValue = <K extends keyof AppSettingsV2Update>(key: K): AppSettingsV2Update[K] | undefined => {
+    if (key in pendingAppChanges) {
+      return pendingAppChanges[key]
+    }
+    return appSettings?.[key as keyof typeof appSettings] as AppSettingsV2Update[K]
   }
 
   return (
@@ -369,7 +448,7 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
                       </Label>
                       <ModelButtons
                         models={models}
-                        selectedId={appSettings.coderModel}
+                        selectedId={getAppValue('coderModel') || appSettings?.coderModel || ''}
                         onSelect={(id) => handleAppChange({ coderModel: id })}
                         disabled={isSaving}
                       />
@@ -380,7 +459,7 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
                       </Label>
                       <ModelButtons
                         models={models}
-                        selectedId={appSettings.testerModel}
+                        selectedId={getAppValue('testerModel') || appSettings?.testerModel || ''}
                         onSelect={(id) => handleAppChange({ testerModel: id })}
                         disabled={isSaving}
                       />
@@ -391,7 +470,7 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
                       </Label>
                       <ModelButtons
                         models={models}
-                        selectedId={appSettings.initializerModel}
+                        selectedId={getAppValue('initializerModel') || appSettings?.initializerModel || ''}
                         onSelect={(id) => handleAppChange({ initializerModel: id })}
                         disabled={isSaving}
                       />
@@ -406,7 +485,7 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
                     description="Skip testing for rapid prototyping"
                   >
                     <Switch
-                      checked={appSettings.yoloMode}
+                      checked={getAppValue('yoloMode') ?? appSettings?.yoloMode ?? false}
                       onCheckedChange={(v) => handleAppChange({ yoloMode: v })}
                       disabled={isSaving}
                     />
@@ -422,7 +501,7 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
                           onClick={() => handleAppChange({ testingAgentRatio: n })}
                           disabled={isSaving}
                           className={`px-3 py-1 text-sm font-medium transition-colors ${
-                            appSettings.testingAgentRatio === n
+                            (getAppValue('testingAgentRatio') ?? appSettings?.testingAgentRatio ?? 1) === n
                               ? 'bg-primary text-primary-foreground'
                               : 'bg-background text-foreground hover:bg-muted'
                           }`}
@@ -819,8 +898,32 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
           </TabsContent>
         </Tabs>
 
-        {/* Save indicator */}
-        {(updateApp.isSuccess || updateProject.isSuccess) && (
+        {/* Footer with Save/Cancel or success message */}
+        {hasUnsavedChanges ? (
+          <div className="flex items-center justify-between border-t pt-4 mt-4">
+            <div className="text-sm text-muted-foreground">
+              You have unsaved changes
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleCancel} disabled={isSaving}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : (updateApp.isSuccess || updateProject.isSuccess) && (
           <div className="flex items-center gap-2 text-green-600 text-sm mt-2">
             <Check size={14} />
             Settings saved

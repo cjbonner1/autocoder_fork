@@ -30,6 +30,7 @@ import { ResetProjectModal } from './components/ResetProjectModal'
 import { ProjectSetupRequired } from './components/ProjectSetupRequired'
 import { GitStatusBar } from './components/GitStatusBar'
 import { ActiveSettingsDisplay } from './components/ActiveSettingsDisplay'
+import { ServerStatusBanner } from './components/ServerStatusBanner'
 // import { UsageLevelIndicator } from './components/UsageLevelIndicator'  // Disabled until smart scheduler integration
 import { PRWorkflowPanel } from './components/PRWorkflowPanel'
 import { DeployPanel } from './components/DeployPanel'
@@ -290,6 +291,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Server Status Banner - shows when server is unreachable */}
+      <ServerStatusBanner />
+
       {/* Header */}
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md text-foreground border-b-2 border-border">
         <div className="max-w-7xl mx-auto px-4 py-4">
