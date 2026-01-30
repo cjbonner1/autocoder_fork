@@ -160,6 +160,29 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'app' | 'project' | 'usage' | 'git'>('app')
 
+  // Kanban columns (stored in localStorage, not backend)
+  const [kanbanColumns, setKanbanColumns] = useState<3 | 4>(() => {
+    try {
+      return localStorage.getItem('autocoder-kanban-columns') === '4' ? 4 : 3
+    } catch {
+      return 3
+    }
+  })
+
+  const handleKanbanColumnsChange = (cols: 3 | 4) => {
+    setKanbanColumns(cols)
+    try {
+      localStorage.setItem('autocoder-kanban-columns', String(cols))
+      // Dispatch storage event to notify App.tsx
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'autocoder-kanban-columns',
+        newValue: String(cols),
+      }))
+    } catch {
+      // localStorage not available
+    }
+  }
+
   // Fetch app settings
   const { data: appSettings, isLoading: appLoading, error: appError } = useQuery({
     queryKey: ['settings-v2-app'],
@@ -452,6 +475,26 @@ export function SettingsModalV2({ isOpen, onClose, projectName }: SettingsModalV
                       onCheckedChange={(v) => handleAppChange({ celebrateOnComplete: v })}
                       disabled={isSaving}
                     />
+                  </SettingRow>
+                  <SettingRow
+                    label="Kanban Columns"
+                    description="Show 4 columns (with Testing) or 3 columns"
+                  >
+                    <div className="flex gap-1">
+                      {([3, 4] as const).map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => handleKanbanColumnsChange(n)}
+                          className={`px-3 py-1 text-xs font-medium rounded-md border transition-colors ${
+                            kanbanColumns === n
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background text-foreground border-border hover:bg-muted'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
                   </SettingRow>
                 </Section>
 

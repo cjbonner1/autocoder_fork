@@ -43,6 +43,7 @@ import { Badge } from '@/components/ui/badge'
 
 const STORAGE_KEY = 'autocoder-selected-project'
 const VIEW_MODE_KEY = 'autocoder-view-mode'
+const KANBAN_COLUMNS_KEY = 'autocoder-kanban-columns'
 
 // Bottom padding for main content when debug panel is collapsed (40px header + 8px margin)
 const COLLAPSED_DEBUG_PANEL_CLEARANCE = 48
@@ -77,6 +78,14 @@ function App() {
       return 'kanban'
     }
   })
+  const [kanbanColumns, setKanbanColumns] = useState<3 | 4>(() => {
+    try {
+      const stored = localStorage.getItem(KANBAN_COLUMNS_KEY)
+      return stored === '4' ? 4 : 3
+    } catch {
+      return 3
+    }
+  })
 
   const queryClient = useQueryClient()
   const { data: projects, isLoading: projectsLoading } = useProjects()
@@ -106,6 +115,26 @@ function App() {
       // localStorage not available
     }
   }, [viewMode])
+
+  // Persist kanban columns to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(KANBAN_COLUMNS_KEY, String(kanbanColumns))
+    } catch {
+      // localStorage not available
+    }
+  }, [kanbanColumns])
+
+  // Listen for kanban columns changes from settings modal
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === KANBAN_COLUMNS_KEY) {
+        setKanbanColumns(e.newValue === '4' ? 4 : 3)
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   // Play sounds when features move between columns
   useFeatureSound(features)
@@ -462,7 +491,7 @@ function App() {
             )}
 
             {/* Kanban Board or Dependency Graph based on view mode */}
-            {(viewMode === 'kanban' || viewMode === 'kanban4') ? (
+            {viewMode === 'kanban' ? (
               <KanbanBoard
                 features={features}
                 onFeatureClick={setSelectedFeature}
@@ -471,7 +500,7 @@ function App() {
                 activeAgents={wsState.activeAgents}
                 onCreateSpec={() => setShowSpecChat(true)}
                 hasSpec={hasSpec}
-                fourColumnView={viewMode === 'kanban4'}
+                fourColumnView={kanbanColumns === 4}
               />
             ) : (
               <Card className="overflow-hidden" style={{ height: '600px' }}>

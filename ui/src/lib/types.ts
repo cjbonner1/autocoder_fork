@@ -653,6 +653,7 @@ export interface AppSettingsV2 {
   showDebugPanel: boolean
   debugPanelHeight: number
   celebrateOnComplete: boolean
+  kanbanColumns: 3 | 4  // Number of columns in Kanban view
   // Git settings
   autoCommit: boolean
   commitMessagePrefix: string
@@ -674,6 +675,7 @@ export interface AppSettingsV2Update {
   showDebugPanel?: boolean
   debugPanelHeight?: number
   celebrateOnComplete?: boolean
+  kanbanColumns?: 3 | 4
   autoCommit?: boolean
   commitMessagePrefix?: string
   createPullRequests?: boolean
@@ -726,6 +728,7 @@ export interface SettingsCategoriesResponse {
     showDebugPanel: boolean
     debugPanelHeight: number
     celebrateOnComplete: boolean
+    kanbanColumns: 3 | 4
   }
   git: {
     autoCommit: boolean
