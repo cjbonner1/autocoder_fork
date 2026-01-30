@@ -299,6 +299,7 @@ class WSAgentUpdateMessage(BaseModel):
     state: AgentState
     thought: str | None = None
     timestamp: datetime
+    model: str | None = None  # Model being used by this agent
 
 
 # ============================================================================
