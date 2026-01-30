@@ -29,10 +29,9 @@ import { ThemeSelector } from './components/ThemeSelector'
 import { ResetProjectModal } from './components/ResetProjectModal'
 import { ProjectSetupRequired } from './components/ProjectSetupRequired'
 import { GitStatusBar } from './components/GitStatusBar'
-import { UsageLevelIndicator } from './components/UsageLevelIndicator'
+// import { UsageLevelIndicator } from './components/UsageLevelIndicator'  // Disabled until smart scheduler integration
 import { PRWorkflowPanel } from './components/PRWorkflowPanel'
 import { DeployPanel } from './components/DeployPanel'
-import { ActivitySidebar } from './components/ActivitySidebar'
 import { VersionBadgeDetailed } from './components/VersionBadge'
 import { getDependencyGraph } from './lib/api'
 import { Loader2, Settings, Moon, Sun, RotateCcw } from 'lucide-react'
@@ -343,8 +342,8 @@ function App() {
                   {/* Git Status */}
                   <GitStatusBar projectName={selectedProject} />
 
-                  {/* Usage Level Indicator */}
-                  <UsageLevelIndicator projectName={selectedProject} />
+                  {/* Usage Level Indicator - disabled until smart scheduler integration is complete */}
+                  {/* <UsageLevelIndicator projectName={selectedProject} /> */}
                 </>
               )}
 
@@ -560,11 +559,6 @@ function App() {
             onClose={() => setAssistantOpen(false)}
           />
         </>
-      )}
-
-      {/* Activity Sidebar - shows recent agent activity */}
-      {selectedProject && (
-        <ActivitySidebar activities={wsState.recentActivity} />
       )}
 
       {/* Settings Modal */}

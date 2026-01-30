@@ -931,6 +931,7 @@ class ParallelOrchestrator:
         debug_log.section("ORCHESTRATOR STARTUP")
         debug_log.log("STARTUP", "Orchestrator run_loop starting",
             project_dir=str(self.project_dir),
+            model=self.model,
             max_concurrency=self.max_concurrency,
             yolo_mode=self.yolo_mode,
             testing_agent_ratio=self.testing_agent_ratio,
@@ -940,6 +941,7 @@ class ParallelOrchestrator:
         print("  UNIFIED ORCHESTRATOR SETTINGS", flush=True)
         print("=" * 70, flush=True)
         print(f"Project: {self.project_dir}", flush=True)
+        print(f"Model: {self.model or 'default'}", flush=True)
         print(f"Max concurrency: {self.max_concurrency} coding agents", flush=True)
         print(f"YOLO mode: {self.yolo_mode}", flush=True)
         print(f"Regression agents: {self.testing_agent_ratio} (maintained independently)", flush=True)
