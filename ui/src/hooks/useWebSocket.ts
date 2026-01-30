@@ -215,6 +215,7 @@ export function useProjectWebSocket(projectName: string | null) {
                     thought: message.thought,
                     timestamp: message.timestamp,
                     logs: agentLogsArray,
+                    model: message.model,
                   }
                 } else {
                   // Add new agent
@@ -230,6 +231,7 @@ export function useProjectWebSocket(projectName: string | null) {
                       thought: message.thought,
                       timestamp: message.timestamp,
                       logs: agentLogsArray,
+                      model: message.model,
                     },
                   ]
                 }

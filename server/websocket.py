@@ -78,11 +78,12 @@ class AgentTracker:
     types for the same feature.
     """
 
-    def __init__(self):
+    def __init__(self, model: str | None = None):
         # (feature_id, agent_type) -> {name, state, last_thought, agent_index, agent_type}
         self.active_agents: dict[tuple[int, str], dict] = {}
         self._next_agent_index = 0
         self._lock = asyncio.Lock()
+        self.model = model  # Model being used by agents
 
     async def process_line(self, line: str) -> dict | None:
         """
@@ -185,6 +186,7 @@ class AgentTracker:
                     'state': state,
                     'thought': thought,
                     'timestamp': datetime.now().isoformat(),
+                    'model': self.model,
                 }
 
         return None
@@ -252,6 +254,7 @@ class AgentTracker:
                 'state': 'thinking',
                 'thought': 'Starting work...',
                 'timestamp': datetime.now().isoformat(),
+                'model': self.model,
             }
 
     async def _handle_agent_complete(self, feature_id: int, is_success: bool, agent_type: str = "coding") -> dict | None:
@@ -279,6 +282,7 @@ class AgentTracker:
                     'state': state,
                     'thought': 'Completed successfully!' if is_success else 'Failed to complete',
                     'timestamp': datetime.now().isoformat(),
+                    'model': self.model,
                 }
                 del self.active_agents[key]
                 return result
@@ -296,6 +300,7 @@ class AgentTracker:
                     'thought': 'Completed successfully!' if is_success else 'Failed to complete',
                     'timestamp': datetime.now().isoformat(),
                     'synthetic': True,
+                    'model': self.model,
                 }
 
 
@@ -635,7 +640,8 @@ async def project_websocket(websocket: WebSocket, project_name: str):
     agent_manager = get_manager(project_name, project_dir, ROOT_DIR)
 
     # Create agent tracker for multi-agent mode
-    agent_tracker = AgentTracker()
+    # Pass the model from agent_manager so it can be included in agent_update messages
+    agent_tracker = AgentTracker(model=agent_manager.model)
 
     # Create orchestrator tracker for observability
     orchestrator_tracker = OrchestratorTracker()

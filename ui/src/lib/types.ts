@@ -276,6 +276,7 @@ export interface WSAgentUpdateMessage {
   thought?: string
   timestamp: string
   synthetic?: boolean  // True for synthetic completions from untracked agents
+  model?: string  // Model ID being used by this agent
 }
 
 export interface WSAgentStatusMessage {
