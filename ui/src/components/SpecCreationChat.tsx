@@ -94,6 +94,13 @@ export function SpecCreationChat({
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Clear error when connection succeeds
+  useEffect(() => {
+    if (connectionStatus === 'connected') {
+      setError(null)
+    }
+  }, [connectionStatus])
+
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
