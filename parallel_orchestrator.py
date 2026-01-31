@@ -1126,6 +1126,11 @@ class ParallelOrchestrator:
             finally:
                 session.close()
 
+            # Run doc-admin after initialization to create initial documentation
+            if self._doc_admin_interval > 0:
+                print("[doc-admin] Running initial documentation assessment...", flush=True)
+                self._spawn_doc_admin_agent()
+
         # Phase 2: Feature loop
         # Check for features to resume from previous session
         resumable = self.get_resumable_features()
