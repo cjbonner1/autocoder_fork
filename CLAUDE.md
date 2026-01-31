@@ -99,7 +99,7 @@ npm run lint     # Run ESLint
 ```bash
 ruff check .                      # Lint
 mypy .                            # Type check
-python test_security.py           # Security unit tests (163 tests)
+python test_security.py           # Security unit tests (12 tests)
 python test_security_integration.py  # Integration tests (9 tests)
 ```
 
@@ -125,7 +125,8 @@ Configuration in `pyproject.toml`:
 
 - `start.py` - CLI launcher with project creation/selection menu
 - `autonomous_agent_demo.py` - Entry point for running the agent
-- `agent.py` - Agent session loop using Claude Agent SDK
+- `agent.py` - Agent session loop using Claude Agent SDK (supports initializer, coding, doc-admin, and deploy agents)
+- `agent_types.py` - Agent type definitions and initialization
 - `client.py` - ClaudeSDKClient configuration with security hooks and MCP servers
 - `security.py` - Bash command allowlist validation (ALLOWED_COMMANDS whitelist)
 - `prompts.py` - Prompt template loading with project-specific fallback
@@ -163,14 +164,22 @@ Features are stored in SQLite (`features.db`) via SQLAlchemy. The agent interact
 
 MCP tools available to the agent:
 - `feature_get_stats` - Progress statistics
-- `feature_get_next` - Get highest-priority pending feature (respects dependencies)
-- `feature_claim_next` - Atomically claim next available feature (for parallel mode)
-- `feature_get_for_regression` - Random passing features for regression testing
+- `feature_get_ready` - Get features ready to start (dependencies satisfied)
+- `feature_claim_and_get` - Atomically claim and retrieve next available feature (for parallel mode)
+- `feature_get_blocked` - Get features blocked by unmet dependencies
 - `feature_mark_passing` - Mark feature complete
+- `feature_mark_failing` - Mark feature as failing (regression detected)
+- `feature_mark_in_progress` - Mark feature as in-progress
+- `feature_clear_in_progress` - Clear in-progress status from a feature
 - `feature_skip` - Move feature to end of queue
 - `feature_create_bulk` - Initialize all features (used by initializer)
+- `feature_create` - Create a single feature
+- `feature_get_by_id` - Get full feature details by ID
+- `feature_get_summary` - Get minimal feature info (id, name, status, dependencies)
+- `feature_get_graph` - Get dependency graph data for visualization
 - `feature_add_dependency` - Add dependency between features (with cycle detection)
 - `feature_remove_dependency` - Remove a dependency
+- `feature_set_dependencies` - Set all dependencies for a feature at once
 
 ### React UI (ui/)
 
@@ -312,7 +321,7 @@ blocked_commands:
 
 **Files:**
 - `security.py` - Command validation logic and hardcoded blocklist
-- `test_security.py` - Unit tests for security system (136 tests)
+- `test_security.py` - Unit tests for security system (12 tests)
 - `test_security_integration.py` - Integration tests with real hooks (9 tests)
 - `TEST_SECURITY.md` - Quick testing reference guide
 - `examples/project_allowed_commands.yaml` - Project config example (all commented by default)
