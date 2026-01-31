@@ -137,6 +137,13 @@ Use browser automation tools:
 - Skip visual verification
 - Mark tests passing without thorough verification
 
+**IMPORTANT - Headless Mode:**
+When writing browser automation scripts (Playwright, Puppeteer, etc.), always use **headless mode** to avoid disrupting the user:
+```javascript
+const browser = await chromium.launch({ headless: true });
+```
+This runs the browser invisibly in the background. Only use `headless: false` if explicitly debugging.
+
 ### STEP 5.5: MANDATORY VERIFICATION CHECKLIST (BEFORE MARKING ANY TEST PASSING)
 
 **You MUST complete ALL of these checks before marking any feature as "passes": true**
