@@ -6,6 +6,7 @@ Manages interactive spec creation conversation with Claude.
 Uses the create-spec.md skill to guide users through app spec creation.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -166,6 +167,15 @@ class SpecChatSession:
         # Use system Claude CLI to avoid bundled Bun runtime crash (exit code 3) on Windows
         system_cli = shutil.which("claude")
 
+        # Check that Claude CLI is available
+        if not system_cli:
+            logger.error("Claude CLI not found in PATH")
+            yield {
+                "type": "error",
+                "content": "Claude CLI not found. Please install it with: npm install -g @anthropic-ai/claude-code"
+            }
+            return
+
         # Build environment overrides for API configuration
         sdk_env = {var: os.getenv(var) for var in API_ENV_VARS if os.getenv(var)}
 
@@ -174,6 +184,7 @@ class SpecChatSession:
         model = os.getenv("ANTHROPIC_DEFAULT_OPUS_MODEL", "claude-opus-4-5-20251101")
 
         try:
+            logger.info(f"Creating ClaudeSDKClient with CLI: {system_cli}")
             self.client = ClaudeSDKClient(
                 options=ClaudeAgentOptions(
                     model=model,
@@ -196,9 +207,19 @@ class SpecChatSession:
                     env=sdk_env,
                 )
             )
-            # Enter the async context and track it
-            await self.client.__aenter__()
+            # Enter the async context with timeout to prevent hanging
+            logger.info("Entering Claude client context (spawning CLI subprocess)...")
+            try:
+                await asyncio.wait_for(self.client.__aenter__(), timeout=30.0)
+            except asyncio.TimeoutError:
+                logger.error("Claude CLI startup timed out after 30 seconds")
+                yield {
+                    "type": "error",
+                    "content": "Claude CLI startup timed out. Please check that Claude is properly configured."
+                }
+                return
             self._client_entered = True
+            logger.info("Claude client ready")
         except Exception as e:
             logger.exception("Failed to create Claude client")
             yield {

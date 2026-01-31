@@ -195,6 +195,7 @@ class ExpandChatSession:
 
         # Create Claude SDK client
         try:
+            logger.info(f"Creating ClaudeSDKClient with CLI: {system_cli}")
             self.client = ClaudeSDKClient(
                 options=ClaudeAgentOptions(
                     model=model,
@@ -213,8 +214,19 @@ class ExpandChatSession:
                     env=sdk_env,
                 )
             )
-            await self.client.__aenter__()
+            # Enter the async context with timeout to prevent hanging
+            logger.info("Entering Claude client context (spawning CLI subprocess)...")
+            try:
+                await asyncio.wait_for(self.client.__aenter__(), timeout=30.0)
+            except asyncio.TimeoutError:
+                logger.error("Claude CLI startup timed out after 30 seconds")
+                yield {
+                    "type": "error",
+                    "content": "Claude CLI startup timed out. Please check that Claude is properly configured."
+                }
+                return
             self._client_entered = True
+            logger.info("Claude client ready")
         except Exception:
             logger.exception("Failed to create Claude client")
             yield {
