@@ -7,15 +7,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useBoardTheme } from '../contexts/ThemeContext'
-import { getAgentName } from '../lib/themes'
+import { getAgentName, getAgentCatchphrase, type Theme } from '../lib/themes'
 
 interface AgentCardProps {
   agent: ActiveAgent
   onShowLogs?: (agentIndex: number) => void
 }
 
-// Get a friendly state description
-function getStateText(state: ActiveAgent['state']): string {
+// Default state descriptions
+function getDefaultStateText(state: ActiveAgent['state']): string {
   switch (state) {
     case 'idle':
       return 'Standing by...'
@@ -34,6 +34,15 @@ function getStateText(state: ActiveAgent['state']): string {
     default:
       return 'Busy...'
   }
+}
+
+// Get state text - uses theme catchphrases if available
+function getStateText(state: ActiveAgent['state'], theme: Theme, agentName: string): string {
+  // Check for themed catchphrase first
+  const catchphrase = getAgentCatchphrase(theme, agentName, state as 'idle' | 'thinking' | 'working' | 'testing' | 'success' | 'error' | 'struggling')
+  if (catchphrase) return catchphrase
+  // Fall back to default
+  return getDefaultStateText(state)
 }
 
 // Get state color class
@@ -137,7 +146,7 @@ export function AgentCard({ agent, onShowLogs }: AgentCardProps) {
               {themedAgentName}
             </div>
             <div className={`text-xs ${getStateColor(agent.state)}`}>
-              {getStateText(agent.state)}
+              {getStateText(agent.state, theme, themedAgentName)}
             </div>
           </div>
           {/* Log button */}

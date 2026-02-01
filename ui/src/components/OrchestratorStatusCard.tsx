@@ -6,13 +6,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useBoardTheme } from '../contexts/ThemeContext'
+import { getOrchestratorMessage, type Theme } from '../lib/themes'
 
 interface OrchestratorStatusCardProps {
   status: OrchestratorStatus
 }
 
-// Get a friendly state description
-function getStateText(state: OrchestratorState): string {
+// Default state descriptions
+function getDefaultStateText(state: OrchestratorState): string {
   switch (state) {
     case 'idle':
       return 'Standing by...'
@@ -29,6 +30,15 @@ function getStateText(state: OrchestratorState): string {
     default:
       return 'Orchestrating...'
   }
+}
+
+// Get state text - uses theme messages if available
+function getStateText(state: OrchestratorState, theme: Theme): string {
+  // Check for themed message first
+  const themedMessage = getOrchestratorMessage(theme, state as 'idle' | 'initializing' | 'scheduling' | 'spawning' | 'monitoring' | 'complete')
+  if (themedMessage) return themedMessage
+  // Fall back to default
+  return getDefaultStateText(state)
 }
 
 // Get state color
