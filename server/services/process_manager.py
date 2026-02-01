@@ -328,34 +328,19 @@ class AgentProcessManager:
         self.max_concurrency = max_concurrency or 1
         self.testing_agent_ratio = testing_agent_ratio
 
-        # Create worktree for agent work if the project is a git repo
-        work_dir = self.project_dir
-        try:
-            from server.services.worktree_manager import get_worktree_manager, is_git_repo
-            if is_git_repo(self.project_dir):
-                manager = get_worktree_manager(self.project_name, self.project_dir)
-                if not manager.exists():
-                    success, msg = manager.create()
-                    if success:
-                        work_dir = manager.worktree_path
-                        self.worktree_path = work_dir
-                        logger.info(f"Created worktree for {self.project_name} at {work_dir}")
-                    else:
-                        logger.warning(f"Failed to create worktree: {msg}, using project dir")
-                else:
-                    work_dir = manager.worktree_path
-                    self.worktree_path = work_dir
-                    logger.info(f"Using existing worktree for {self.project_name} at {work_dir}")
-        except Exception as e:
-            logger.warning(f"Worktree setup failed, using project dir: {e}")
+        # NOTE: Worktree creation moved to parallel_orchestrator.py
+        # Worktree is created AFTER initialization so spec files are available.
+        # The orchestrator will handle worktree setup and pass the correct path
+        # to coding agents.
 
         # Build command - unified orchestrator with --concurrency
+        # Pass the main project directory - orchestrator handles worktree after init
         cmd = [
             sys.executable,
             "-u",  # Force unbuffered stdout/stderr for real-time output
             str(self.root_dir / "autonomous_agent_demo.py"),
             "--project-dir",
-            str(work_dir.resolve()),
+            str(self.project_dir.resolve()),
         ]
 
         # Add --model flag if model is specified
@@ -374,7 +359,7 @@ class AgentProcessManager:
 
         try:
             # Start subprocess with piped stdout/stderr
-            # Use work_dir as cwd so Claude SDK sandbox allows access to project files
+            # Use project_dir as cwd so Claude SDK sandbox allows access to project files
             # stdin=DEVNULL prevents blocking if Claude CLI or child process tries to read stdin
             # CREATE_NO_WINDOW on Windows prevents console window pop-ups
             # PYTHONUNBUFFERED ensures output isn't delayed
@@ -382,7 +367,7 @@ class AgentProcessManager:
                 "stdin": subprocess.DEVNULL,
                 "stdout": subprocess.PIPE,
                 "stderr": subprocess.STDOUT,
-                "cwd": str(work_dir),
+                "cwd": str(self.project_dir),
                 "env": {**os.environ, "PYTHONUNBUFFERED": "1"},
             }
             if sys.platform == "win32":

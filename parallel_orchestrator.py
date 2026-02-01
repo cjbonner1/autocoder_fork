@@ -158,7 +158,11 @@ class ParallelOrchestrator:
             on_output: Callback for agent output (feature_id, line)
             on_status: Callback for agent status changes (feature_id, status)
         """
+        # Store main project dir separately - used for initialization
+        # project_dir may be updated to worktree path after initialization
+        self.main_project_dir = project_dir
         self.project_dir = project_dir
+        self.worktree_path: Path | None = None
         self.max_concurrency = min(max(max_concurrency, 1), MAX_PARALLEL_AGENTS)
         self.model = model
         self.yolo_mode = yolo_mode
@@ -753,6 +757,90 @@ class ParallelOrchestrator:
         """
         return self._spawn_doc_admin_agent()
 
+    def _setup_worktree_after_init(self) -> None:
+        """Create git worktree for coding agents after initialization completes.
+
+        This is called AFTER the initializer has read the spec and created features,
+        ensuring that spec files (which may be untracked) are available during init.
+        Coding agents will work in the worktree for isolation.
+        """
+        try:
+            # Import here to avoid circular imports
+            import sys
+            sys.path.insert(0, str(AUTOCODER_ROOT / "server" / "services"))
+            from worktree_manager import get_worktree_manager, is_git_repo
+
+            if not is_git_repo(self.main_project_dir):
+                print("[worktree] Project is not a git repo, skipping worktree setup", flush=True)
+                return
+
+            # Get project name from directory name
+            project_name = self.main_project_dir.name
+
+            manager = get_worktree_manager(project_name, self.main_project_dir)
+
+            if manager.exists():
+                # Worktree already exists, use it
+                self.worktree_path = manager.worktree_path
+                self.project_dir = manager.worktree_path
+                print(f"[worktree] Using existing worktree at {self.worktree_path}", flush=True)
+            else:
+                # Create new worktree
+                success, msg = manager.create()
+                if success:
+                    self.worktree_path = manager.worktree_path
+                    self.project_dir = manager.worktree_path
+                    print(f"[worktree] Created worktree at {self.worktree_path}", flush=True)
+                else:
+                    print(f"[worktree] Failed to create worktree: {msg}", flush=True)
+                    print("[worktree] Coding agents will work in main project directory", flush=True)
+                    return
+
+            # Create symlink to main project's features.db in worktree
+            # This ensures all agents share the same database
+            self._symlink_database_to_worktree()
+
+            debug_log.log("WORKTREE", "Worktree setup complete",
+                worktree_path=str(self.worktree_path) if self.worktree_path else None,
+                project_dir=str(self.project_dir))
+
+        except Exception as e:
+            print(f"[worktree] Error setting up worktree: {e}", flush=True)
+            print("[worktree] Coding agents will work in main project directory", flush=True)
+            debug_log.log("WORKTREE", f"Worktree setup failed: {e}")
+
+    def _symlink_database_to_worktree(self) -> None:
+        """Create symlinks to main project's database files in worktree.
+
+        The features.db is created in the main project during initialization.
+        Coding agents run in the worktree but need access to the same database.
+        We create symlinks so all agents share a single database.
+        """
+        if not self.worktree_path:
+            return
+
+        db_files = ["features.db", "features.db-wal", "features.db-shm"]
+
+        for db_file in db_files:
+            main_db = self.main_project_dir / db_file
+            worktree_db = self.worktree_path / db_file
+
+            # Remove existing file/symlink in worktree if present
+            if worktree_db.exists() or worktree_db.is_symlink():
+                worktree_db.unlink()
+
+            # Create symlink if main db exists
+            if main_db.exists():
+                try:
+                    worktree_db.symlink_to(main_db)
+                    print(f"[worktree] Linked {db_file} to main project", flush=True)
+                except OSError as e:
+                    # On Windows, symlinks may require admin privileges
+                    # Fall back to copying the file
+                    import shutil
+                    print(f"[worktree] Symlink failed ({e}), copying {db_file}", flush=True)
+                    shutil.copy2(main_db, worktree_db)
+
     async def _run_initializer(self) -> bool:
         """Run initializer agent as blocking subprocess.
 
@@ -1142,6 +1230,10 @@ class ParallelOrchestrator:
             if self._doc_admin_interval > 0:
                 print("[doc-admin] Running initial documentation assessment...", flush=True)
                 self._spawn_doc_admin_agent()
+
+        # Create worktree for coding agents (after init if it ran, or now if skipped)
+        # This ensures spec files are in the main repo before creating worktree
+        self._setup_worktree_after_init()
 
         # Phase 2: Feature loop
         # Check for features to resume from previous session
