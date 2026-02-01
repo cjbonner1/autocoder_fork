@@ -21,9 +21,8 @@ export function BoardThemeSelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <CurrentIcon size={16} />
-          <span className="hidden sm:inline">{theme.name}</span>
+        <Button variant="outline" size="sm" title={`Board Theme: ${theme.name}`}>
+          <CurrentIcon size={18} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">

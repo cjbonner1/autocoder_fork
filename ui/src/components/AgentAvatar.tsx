@@ -36,6 +36,23 @@ function generateColorsFromName(name: string): { primary: string; secondary: str
   return THEMED_PALETTES[Math.abs(hash) % THEMED_PALETTES.length]
 }
 
+// Star Trek TOS crew colors (uniform colors)
+const STARFLEET_COLORS: Record<string, { primary: string; secondary: string; accent: string }> = {
+  'Spock': { primary: '#3B82F6', secondary: '#60A5FA', accent: '#DBEAFE' },      // Science Blue
+  'McCoy': { primary: '#3B82F6', secondary: '#60A5FA', accent: '#DBEAFE' },      // Medical Blue
+  'Scotty': { primary: '#DC2626', secondary: '#EF4444', accent: '#FEE2E2' },     // Engineering Red
+  'Sulu': { primary: '#D4AF37', secondary: '#F0D060', accent: '#FFF8DC' },       // Command Gold
+  'Uhura': { primary: '#DC2626', secondary: '#EF4444', accent: '#FEE2E2' },      // Communications Red
+  'Chekov': { primary: '#D4AF37', secondary: '#F0D060', accent: '#FFF8DC' },     // Command Gold
+  'Chapel': { primary: '#3B82F6', secondary: '#60A5FA', accent: '#DBEAFE' },     // Medical Blue
+  'Captain Kirk': { primary: '#D4AF37', secondary: '#F0D060', accent: '#FFF8DC' }, // Command Gold
+}
+
+// Check if name is a Starfleet crew member
+function isStarfleetCrew(name: string): boolean {
+  return name in STARFLEET_COLORS
+}
+
 const AVATAR_COLORS: Record<AgentMascot, { primary: string; secondary: string; accent: string }> = {
   // Original 5
   Spark: { primary: '#3B82F6', secondary: '#60A5FA', accent: '#DBEAFE' },  // Blue robot
@@ -502,6 +519,239 @@ function FluxSVG({ colors, size }: { colors: typeof AVATAR_COLORS.Flux; size: nu
   )
 }
 
+// ============================================================================
+// STAR TREK TOS CREW AVATARS
+// ============================================================================
+
+// Spock - Vulcan with pointed ears
+function SpockSVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      {/* Vulcan ears */}
+      <polygon points="10,24 18,8 22,28" fill="#F5D0A9" />
+      <polygon points="54,24 46,8 42,28" fill="#F5D0A9" />
+      {/* Head */}
+      <ellipse cx="32" cy="34" rx="18" ry="22" fill="#F5D0A9" />
+      {/* Hair - bowl cut */}
+      <ellipse cx="32" cy="20" rx="18" ry="12" fill="#1a1a1a" />
+      <rect x="14" y="18" width="36" height="8" fill="#1a1a1a" />
+      {/* Eyebrows - angled Vulcan style */}
+      <line x1="20" y1="30" x2="28" y2="26" stroke="#1a1a1a" strokeWidth="2" />
+      <line x1="44" y1="30" x2="36" y2="26" stroke="#1a1a1a" strokeWidth="2" />
+      {/* Eyes */}
+      <ellipse cx="26" cy="34" rx="3" ry="4" fill="white" />
+      <ellipse cx="38" cy="34" rx="3" ry="4" fill="white" />
+      <circle cx="26" cy="35" r="2" fill="#1a1a1a" />
+      <circle cx="38" cy="35" r="2" fill="#1a1a1a" />
+      {/* Uniform collar */}
+      <path d="M18,54 Q32,48 46,54 L46,64 L18,64 Z" fill={colors.primary} />
+      <rect x="28" y="54" width="8" height="10" fill="#1a1a1a" />
+    </svg>
+  )
+}
+
+// McCoy - Southern doctor with slight frown
+function McCoySVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      {/* Head */}
+      <ellipse cx="32" cy="34" rx="18" ry="22" fill="#F5D0A9" />
+      {/* Hair - wavy on top */}
+      <ellipse cx="32" cy="18" rx="16" ry="10" fill="#5D4037" />
+      <ellipse cx="26" cy="16" rx="4" ry="3" fill="#5D4037" />
+      <ellipse cx="38" cy="16" rx="4" ry="3" fill="#5D4037" />
+      {/* Eyebrows - slightly furrowed */}
+      <path d="M20,28 Q24,26 28,28" stroke="#5D4037" strokeWidth="2" fill="none" />
+      <path d="M36,28 Q40,26 44,28" stroke="#5D4037" strokeWidth="2" fill="none" />
+      {/* Eyes */}
+      <ellipse cx="26" cy="34" rx="3" ry="3" fill="white" />
+      <ellipse cx="38" cy="34" rx="3" ry="3" fill="white" />
+      <circle cx="26" cy="34" r="2" fill="#4A90A4" />
+      <circle cx="38" cy="34" r="2" fill="#4A90A4" />
+      {/* Slight frown */}
+      <path d="M26,46 Q32,44 38,46" stroke="#8B4513" strokeWidth="2" fill="none" />
+      {/* Uniform collar + medical insignia */}
+      <path d="M18,54 Q32,48 46,54 L46,64 L18,64 Z" fill={colors.primary} />
+      <circle cx="32" cy="58" r="4" fill="white" stroke={colors.primary} strokeWidth="1" />
+      <line x1="32" y1="55" x2="32" y2="61" stroke={colors.primary} strokeWidth="2" />
+      <line x1="29" y1="58" x2="35" y2="58" stroke={colors.primary} strokeWidth="2" />
+    </svg>
+  )
+}
+
+// Scotty - Scottish engineer
+function ScottySVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      {/* Head */}
+      <ellipse cx="32" cy="34" rx="18" ry="22" fill="#F5D0A9" />
+      {/* Hair - receding */}
+      <path d="M14,28 Q20,14 32,14 Q44,14 50,28" fill="#8B4513" />
+      <ellipse cx="32" cy="16" rx="8" ry="4" fill="#F5D0A9" />
+      {/* Eyebrows - thick */}
+      <rect x="20" y="28" width="10" height="3" rx="1" fill="#8B4513" />
+      <rect x="34" y="28" width="10" height="3" rx="1" fill="#8B4513" />
+      {/* Eyes */}
+      <ellipse cx="26" cy="36" rx="3" ry="3" fill="white" />
+      <ellipse cx="38" cy="36" rx="3" ry="3" fill="white" />
+      <circle cx="26" cy="36" r="2" fill="#6B4423" />
+      <circle cx="38" cy="36" r="2" fill="#6B4423" />
+      {/* Friendly smile */}
+      <path d="M26,46 Q32,50 38,46" stroke="#8B4513" strokeWidth="2" fill="none" />
+      {/* Uniform collar */}
+      <path d="M18,54 Q32,48 46,54 L46,64 L18,64 Z" fill={colors.primary} />
+    </svg>
+  )
+}
+
+// Sulu - Helmsman
+function SuluSVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      {/* Head */}
+      <ellipse cx="32" cy="34" rx="18" ry="22" fill="#E8D4A8" />
+      {/* Hair - neat black */}
+      <ellipse cx="32" cy="18" rx="16" ry="10" fill="#1a1a1a" />
+      <rect x="16" y="16" width="32" height="6" fill="#1a1a1a" />
+      {/* Eyebrows */}
+      <rect x="22" y="28" width="8" height="2" rx="1" fill="#1a1a1a" />
+      <rect x="34" y="28" width="8" height="2" rx="1" fill="#1a1a1a" />
+      {/* Eyes */}
+      <ellipse cx="26" cy="34" rx="4" ry="3" fill="white" />
+      <ellipse cx="38" cy="34" rx="4" ry="3" fill="white" />
+      <circle cx="26" cy="34" r="2" fill="#3D2314" />
+      <circle cx="38" cy="34" r="2" fill="#3D2314" />
+      {/* Confident smile */}
+      <path d="M26,46 Q32,50 38,46" stroke="#8B4513" strokeWidth="2" fill="none" />
+      {/* Uniform collar */}
+      <path d="M18,54 Q32,48 46,54 L46,64 L18,64 Z" fill={colors.primary} />
+    </svg>
+  )
+}
+
+// Uhura - Communications officer
+function UhuraSVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      {/* Earrings */}
+      <circle cx="12" cy="36" r="3" fill="#FFD700" />
+      <circle cx="52" cy="36" r="3" fill="#FFD700" />
+      {/* Head */}
+      <ellipse cx="32" cy="34" rx="18" ry="22" fill="#8B5A2B" />
+      {/* Hair - styled up */}
+      <ellipse cx="32" cy="16" rx="14" ry="10" fill="#1a1a1a" />
+      <ellipse cx="32" cy="12" rx="10" ry="6" fill="#1a1a1a" />
+      {/* Eyebrows - arched */}
+      <path d="M20,28 Q24,26 28,28" stroke="#1a1a1a" strokeWidth="2" fill="none" />
+      <path d="M36,28 Q40,26 44,28" stroke="#1a1a1a" strokeWidth="2" fill="none" />
+      {/* Eyes with lashes */}
+      <ellipse cx="26" cy="34" rx="3" ry="4" fill="white" />
+      <ellipse cx="38" cy="34" rx="3" ry="4" fill="white" />
+      <circle cx="26" cy="35" r="2" fill="#3D2314" />
+      <circle cx="38" cy="35" r="2" fill="#3D2314" />
+      {/* Lips */}
+      <ellipse cx="32" cy="46" rx="6" ry="3" fill="#CD5C5C" />
+      {/* Uniform collar */}
+      <path d="M18,54 Q32,48 46,54 L46,64 L18,64 Z" fill={colors.primary} />
+    </svg>
+  )
+}
+
+// Chekov - Young Russian navigator
+function ChekovSVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      {/* Head */}
+      <ellipse cx="32" cy="34" rx="18" ry="22" fill="#F5D0A9" />
+      {/* Hair - curly mop top */}
+      <ellipse cx="32" cy="16" rx="16" ry="12" fill="#D4A574" />
+      <circle cx="24" cy="14" r="4" fill="#D4A574" />
+      <circle cx="32" cy="12" r="4" fill="#D4A574" />
+      <circle cx="40" cy="14" r="4" fill="#D4A574" />
+      <circle cx="20" cy="18" r="3" fill="#D4A574" />
+      <circle cx="44" cy="18" r="3" fill="#D4A574" />
+      {/* Eyebrows */}
+      <rect x="22" y="28" width="8" height="2" rx="1" fill="#D4A574" />
+      <rect x="34" y="28" width="8" height="2" rx="1" fill="#D4A574" />
+      {/* Eyes - eager and bright */}
+      <ellipse cx="26" cy="34" rx="4" ry="4" fill="white" />
+      <ellipse cx="38" cy="34" rx="4" ry="4" fill="white" />
+      <circle cx="27" cy="34" r="2" fill="#4A90A4" />
+      <circle cx="39" cy="34" r="2" fill="#4A90A4" />
+      {/* Eager smile */}
+      <path d="M24,46 Q32,52 40,46" stroke="#8B4513" strokeWidth="2" fill="none" />
+      {/* Uniform collar */}
+      <path d="M18,54 Q32,48 46,54 L46,64 L18,64 Z" fill={colors.primary} />
+    </svg>
+  )
+}
+
+// Chapel - Nurse
+function ChapelSVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      {/* Head */}
+      <ellipse cx="32" cy="34" rx="18" ry="22" fill="#F5D0A9" />
+      {/* Hair - blonde updo */}
+      <ellipse cx="32" cy="16" rx="14" ry="10" fill="#F4E4BA" />
+      <ellipse cx="32" cy="14" rx="10" ry="6" fill="#F4E4BA" />
+      {/* Eyebrows */}
+      <path d="M20,28 Q24,26 28,28" stroke="#C9A86C" strokeWidth="2" fill="none" />
+      <path d="M36,28 Q40,26 44,28" stroke="#C9A86C" strokeWidth="2" fill="none" />
+      {/* Eyes */}
+      <ellipse cx="26" cy="34" rx="3" ry="4" fill="white" />
+      <ellipse cx="38" cy="34" rx="3" ry="4" fill="white" />
+      <circle cx="26" cy="35" r="2" fill="#4A90A4" />
+      <circle cx="38" cy="35" r="2" fill="#4A90A4" />
+      {/* Gentle smile */}
+      <path d="M26,46 Q32,48 38,46" stroke="#CD5C5C" strokeWidth="2" fill="none" />
+      {/* Uniform collar + nurse cap */}
+      <rect x="24" y="6" width="16" height="6" rx="2" fill="white" />
+      <line x1="32" y1="6" x2="32" y2="12" stroke={colors.primary} strokeWidth="2" />
+      <path d="M18,54 Q32,48 46,54 L46,64 L18,64 Z" fill={colors.primary} />
+    </svg>
+  )
+}
+
+// Captain Kirk - The captain
+function CaptainKirkSVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      {/* Head */}
+      <ellipse cx="32" cy="34" rx="18" ry="22" fill="#F5D0A9" />
+      {/* Hair - styled command style */}
+      <ellipse cx="32" cy="18" rx="16" ry="10" fill="#C9A86C" />
+      <path d="M16,22 Q20,14 32,14 Q44,14 48,22" fill="#C9A86C" />
+      {/* Eyebrows - commanding */}
+      <rect x="20" y="28" width="10" height="2" rx="1" fill="#8B7355" />
+      <rect x="34" y="28" width="10" height="2" rx="1" fill="#8B7355" />
+      {/* Eyes - determined */}
+      <ellipse cx="26" cy="34" rx="3" ry="3" fill="white" />
+      <ellipse cx="38" cy="34" rx="3" ry="3" fill="white" />
+      <circle cx="26" cy="34" r="2" fill="#4A6741" />
+      <circle cx="38" cy="34" r="2" fill="#4A6741" />
+      {/* Confident smirk */}
+      <path d="M26,46 Q32,48 38,45" stroke="#8B4513" strokeWidth="2" fill="none" />
+      {/* Command uniform with delta insignia */}
+      <path d="M18,54 Q32,48 46,54 L46,64 L18,64 Z" fill={colors.primary} />
+      <polygon points="32,56 28,62 36,62" fill="#1a1a1a" />
+      <polygon points="32,57 30,61 34,61" fill={colors.primary} />
+    </svg>
+  )
+}
+
+// Mapping for Starfleet crew SVGs
+const STARFLEET_SVGS: Record<string, typeof SpockSVG> = {
+  'Spock': SpockSVG,
+  'McCoy': McCoySVG,
+  'Scotty': ScottySVG,
+  'Sulu': SuluSVG,
+  'Uhura': UhuraSVG,
+  'Chekov': ChekovSVG,
+  'Chapel': ChapelSVG,
+  'Captain Kirk': CaptainKirkSVG,
+}
+
 // Unknown agent fallback - simple question mark icon
 function UnknownSVG({ colors, size }: { colors: typeof UNKNOWN_COLORS; size: number }) {
   return (
@@ -603,24 +853,28 @@ function getStateDescription(state: AgentState): string {
 }
 
 export function AgentAvatar({ name, state, size = 'md', showName = false }: AgentAvatarProps) {
-  // Check if name is a known mascot - if not, use generic avatar with generated colors
   const knownMascot = isMascot(name)
+  const starfleetCrew = isStarfleetCrew(name)
   const { svg: svgSize, font } = SIZES[size]
   const stateDesc = getStateDescription(state)
   const ariaLabel = `Agent ${name} is ${stateDesc}`
 
-  // For known mascots, use their defined colors and SVG
-  // For themed/custom names, generate colors from the name and use generic avatar
+  // Determine colors and SVG based on name type
   let colors: { primary: string; secondary: string; accent: string }
   let SvgComponent: typeof SparkSVG
 
-  if (knownMascot) {
+  if (starfleetCrew) {
+    // Star Trek crew member - use their specific SVG and uniform colors
+    colors = STARFLEET_COLORS[name]
+    SvgComponent = STARFLEET_SVGS[name]
+  } else if (knownMascot) {
+    // Original mascot
     colors = AVATAR_COLORS[name]
     SvgComponent = MASCOT_SVGS[name]
   } else {
-    // Generate colors from name hash for themed names (Spock, McCoy, etc.)
+    // Unknown - generate colors and use generic avatar
     colors = generateColorsFromName(name)
-    SvgComponent = UnknownSVG  // Use generic avatar for themed names
+    SvgComponent = UnknownSVG
   }
 
   return (

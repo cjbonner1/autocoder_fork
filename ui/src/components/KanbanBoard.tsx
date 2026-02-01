@@ -86,7 +86,7 @@ export function KanbanBoard({
 
   if (fourColumnView) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-w-0" style={{ gridTemplateColumns: 'repeat(4, minmax(280px, 1fr))' }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, minmax(300px, 1fr))', minWidth: '1200px' }}>
         <KanbanColumn
           title={theme.columns.pending}
           count={features.pending.length}
