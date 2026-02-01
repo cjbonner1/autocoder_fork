@@ -104,6 +104,22 @@ def get_database_files(project_dir: Path) -> list[Path]:
 
 
 # Migration support - check old locations
+def _db_has_features(db_path: Path) -> bool:
+    """Check if a database file has actual features."""
+    import sqlite3
+    if not db_path.exists():
+        return False
+    try:
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM features")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count > 0
+    except Exception:
+        return False
+
+
 def migrate_legacy_paths(project_dir: Path) -> list[str]:
     """
     Migrate files from old locations to .autocoder/.
@@ -116,21 +132,38 @@ def migrate_legacy_paths(project_dir: Path) -> list[str]:
     autocoder_dir = get_autocoder_dir(project_dir)
     prompts_dir = get_prompts_dir(project_dir)
 
-    # Old locations -> New locations
-    migrations = [
-        # Database files
-        (project_dir / "features.db", autocoder_dir / "features.db"),
-        (project_dir / "features.db-wal", autocoder_dir / "features.db-wal"),
-        (project_dir / "features.db-shm", autocoder_dir / "features.db-shm"),
-        # Control files
+    # Special handling for database - check if old has data but new is empty
+    old_db = project_dir / "features.db"
+    new_db = autocoder_dir / "features.db"
+    if old_db.exists() and _db_has_features(old_db):
+        if not new_db.exists() or not _db_has_features(new_db):
+            # Old has data, new is missing or empty - copy old to new
+            try:
+                if new_db.exists():
+                    new_db.unlink()
+                shutil.copy2(str(old_db), str(new_db))
+                migrated.append("features.db -> .autocoder/features.db (with data)")
+                # Also copy WAL files
+                for ext in ["-wal", "-shm"]:
+                    old_wal = project_dir / f"features.db{ext}"
+                    new_wal = autocoder_dir / f"features.db{ext}"
+                    if old_wal.exists():
+                        if new_wal.exists():
+                            new_wal.unlink()
+                        shutil.copy2(str(old_wal), str(new_wal))
+                        migrated.append(f"features.db{ext} -> .autocoder/features.db{ext}")
+            except Exception as e:
+                print(f"[migration] Failed to migrate database: {e}")
+
+    # Control files - simple move if old exists and new doesn't
+    control_files = [
         (project_dir / ".agent.control", autocoder_dir / ".agent.control"),
         (project_dir / ".agent.orchestrator_status", autocoder_dir / ".agent.orchestrator_status"),
         (project_dir / ".agent.lock", autocoder_dir / ".agent.lock"),
         (project_dir / ".progress_cache", autocoder_dir / ".progress_cache"),
     ]
 
-    # Migrate individual files
-    for old_path, new_path in migrations:
+    for old_path, new_path in control_files:
         if old_path.exists() and not new_path.exists():
             try:
                 shutil.move(str(old_path), str(new_path))

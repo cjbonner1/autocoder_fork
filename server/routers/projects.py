@@ -294,6 +294,7 @@ async def get_project(name: str):
     """Get detailed information about a project."""
     _init_imports()
     (_, _, get_project_path, _, _, get_project_concurrency, _) = _get_registry_functions()
+    from paths import migrate_legacy_paths
 
     name = validate_project_name(name)
     project_dir = get_project_path(name)
@@ -303,6 +304,9 @@ async def get_project(name: str):
 
     if not project_dir.exists():
         raise HTTPException(status_code=404, detail=f"Project directory no longer exists: {project_dir}")
+
+    # Auto-migrate legacy files to .autocoder/ on first access
+    migrate_legacy_paths(project_dir)
 
     has_spec = _check_spec_exists(project_dir)
     stats = get_project_stats(project_dir)
