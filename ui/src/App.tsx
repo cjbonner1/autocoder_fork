@@ -518,16 +518,18 @@ function App() {
 
             {/* Kanban Board or Dependency Graph based on view mode */}
             {viewMode === 'kanban' ? (
-              <KanbanBoard
-                features={features}
-                onFeatureClick={setSelectedFeature}
-                onAddFeature={() => setShowAddFeature(true)}
-                onExpandProject={() => setShowExpandProject(true)}
-                activeAgents={wsState.activeAgents}
-                onCreateSpec={() => setShowSpecChat(true)}
-                hasSpec={hasSpec}
-                fourColumnView={kanbanColumns === 4}
-              />
+              <div className="overflow-x-auto -mx-4 px-4">
+                <KanbanBoard
+                  features={features}
+                  onFeatureClick={setSelectedFeature}
+                  onAddFeature={() => setShowAddFeature(true)}
+                  onExpandProject={() => setShowExpandProject(true)}
+                  activeAgents={wsState.activeAgents}
+                  onCreateSpec={() => setShowSpecChat(true)}
+                  hasSpec={hasSpec}
+                  fourColumnView={kanbanColumns === 4}
+                />
+              </div>
             ) : (
               <Card className="overflow-hidden" style={{ height: '600px' }}>
                 {graphData ? (
