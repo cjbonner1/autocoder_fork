@@ -6,14 +6,16 @@ import type { ActiveAgent, AgentLogEntry, AgentType } from '../lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useBoardTheme } from '../contexts/ThemeContext'
+import { getAgentName, getAgentCatchphrase, type Theme } from '../lib/themes'
 
 interface AgentCardProps {
   agent: ActiveAgent
   onShowLogs?: (agentIndex: number) => void
 }
 
-// Get a friendly state description
-function getStateText(state: ActiveAgent['state']): string {
+// Default state descriptions
+function getDefaultStateText(state: ActiveAgent['state']): string {
   switch (state) {
     case 'idle':
       return 'Standing by...'
@@ -32,6 +34,15 @@ function getStateText(state: ActiveAgent['state']): string {
     default:
       return 'Busy...'
   }
+}
+
+// Get state text - uses theme catchphrases if available
+function getStateText(state: ActiveAgent['state'], theme: Theme, agentName: string): string {
+  // Check for themed catchphrase first
+  const catchphrase = getAgentCatchphrase(theme, agentName, state as 'idle' | 'thinking' | 'working' | 'testing' | 'success' | 'error' | 'struggling')
+  if (catchphrase) return catchphrase
+  // Fall back to default
+  return getDefaultStateText(state)
 }
 
 // Get state color class
@@ -102,11 +113,14 @@ function formatModelName(modelId: string | undefined): string | null {
 }
 
 export function AgentCard({ agent, onShowLogs }: AgentCardProps) {
+  const { theme } = useBoardTheme()
   const isActive = ['thinking', 'working', 'testing'].includes(agent.state)
   const hasLogs = agent.logs && agent.logs.length > 0
   const typeBadge = getAgentTypeBadge(agent.agentType || 'coding')
   const TypeIcon = typeBadge.icon
   const modelDisplay = formatModelName(agent.model)
+  // Use theme-based agent name instead of backend name
+  const themedAgentName = getAgentName(theme, agent.agentIndex)
 
   return (
     <Card className={`min-w-[180px] max-w-[220px] py-3 ${isActive ? 'animate-pulse' : ''}`}>
@@ -126,13 +140,13 @@ export function AgentCard({ agent, onShowLogs }: AgentCardProps) {
 
         {/* Header with avatar and name */}
         <div className="flex items-center gap-2">
-          <AgentAvatar name={agent.agentName} state={agent.state} size="sm" />
+          <AgentAvatar name={themedAgentName} state={agent.state} size="sm" />
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm truncate">
-              {agent.agentName}
+              {themedAgentName}
             </div>
             <div className={`text-xs ${getStateColor(agent.state)}`}>
-              {getStateText(agent.state)}
+              {getStateText(agent.state, theme, themedAgentName)}
             </div>
           </div>
           {/* Log button */}
@@ -185,9 +199,11 @@ interface AgentLogModalProps {
 }
 
 export function AgentLogModal({ agent, logs, onClose }: AgentLogModalProps) {
+  const { theme } = useBoardTheme()
   const [copied, setCopied] = useState(false)
   const typeBadge = getAgentTypeBadge(agent.agentType || 'coding')
   const TypeIcon = typeBadge.icon
+  const themedAgentName = getAgentName(theme, agent.agentIndex)
 
   const handleCopy = async () => {
     const logText = logs
@@ -221,11 +237,11 @@ export function AgentLogModal({ agent, logs, onClose }: AgentLogModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
-            <AgentAvatar name={agent.agentName} state={agent.state} size="sm" />
+            <AgentAvatar name={themedAgentName} state={agent.state} size="sm" />
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold text-lg">
-                  {agent.agentName} Logs
+                  {themedAgentName} Logs
                 </h2>
                 <Badge variant="outline" className={`text-[10px] ${typeBadge.className}`}>
                   <TypeIcon size={10} />
